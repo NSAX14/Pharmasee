@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pharmasee</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <strong>Pharmasee</strong>
+        <small>คลังยาโรงพยาบาล</small>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-btn active" data-tab="overview">ภาพรวมวันนี้</button>
+      <button class="nav-btn" data-tab="inventory">สต็อกตามล็อต (FEFO)</button>
+      <button class="nav-btn" data-tab="reorder">ยาที่ต้องสั่งเพิ่ม</button>
+      <button class="nav-btn" data-tab="abc">วิเคราะห์ ABC</button>
+      <button class="nav-btn" data-tab="manage">เพิ่มยา / รับ-จ่ายยา</button>
+    </nav>
+
+    <p class="sidebar-note">ข้อมูลในหน้านี้เป็นข้อมูลจำลองสำหรับ Prototype</p>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="page-title">ภาพรวมวันนี้</h1>
+        <p id="today-text" class="muted"></p>
+      </div>
+    </header>
+
+    <section class="tab active" id="tab-overview">
+      <div class="kpis" id="kpis"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>ต้องจัดการวันนี้</h2>
+          <ul class="todo" id="todo"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>ยอดใช้ยาและการคาดการณ์</h2>
+            <select id="drug-select" aria-label="เลือกยา"></select>
+          </div>
+          <div id="forecast-chart" class="chart"></div>
+          <p class="muted small" id="forecast-text"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-inventory">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>ลำดับการจ่ายยา (หมดอายุก่อน จ่ายก่อน)</h2>
+            <p class="muted small">ล็อตที่มีป้าย "จ่ายก่อน" คือล็อตที่ควรหยิบของยาตัวนั้นเป็นลำดับแรก</p>
+          </div>
+          <input type="search" id="search" placeholder="ค้นหาชื่อยาหรือเลขล็อต">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ลำดับ</th><th>ยา</th><th>ล็อต</th><th>วันหมดอายุ</th>
+                <th>เหลืออายุ</th><th class="num">คงเหลือ</th><th>สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-reorder">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>จุดสั่งซื้อ (Reorder Point)</h2>
+            <p class="muted small">ROP = ยอดใช้ต่อวัน × Lead time + Safety stock</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ยา</th><th class="num">ยอดใช้/วัน</th><th class="num">Lead time</th>
+                <th class="num">Safety stock</th><th class="num">ROP</th>
+                <th>คงเหลือเทียบ ROP</th><th>สถานะ</th><th class="num">แนะนำสั่ง</th>
+              </tr>
+            </thead>
+            <tbody id="reorder-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-abc">
+      <div class="abc-summary" id="abc-summary"></div>
+      <div class="card">
+        <h2>มูลค่าการใช้ยาต่อเดือน (เรียงจากมากไปน้อย)</h2>
+        <div id="abc-chart" class="abc-chart"></div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>กลุ่ม</th><th>ยา</th><th class="num">มูลค่า/เดือน (บาท)</th>
+                <th class="num">สัดส่วนสะสม</th>
+              </tr>
+            </thead>
+            <tbody id="abc-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-manage">
+      <p class="muted small">ข้อมูลที่เพิ่มหรือแก้ไขจะบันทึกในเบราว์เซอร์ของเครื่องนี้เท่านั้น และทุกแท็บจะคำนวณใหม่ทันที</p>
+      <p id="msg" class="msg" role="status"></p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>เพิ่มยาใหม่</h2>
+          <p class="muted small">กรอกข้อมูลยาและล็อตแรกที่รับเข้า</p>
+          <form id="add-form" class="form-grid">
+            <label class="wide">ชื่อยา<input name="drugName" type="text" required maxlength="60"></label>
+            <label>หน่วย<input name="unit" type="text" required maxlength="12" placeholder="เช่น เม็ด"></label>
+            <label>ราคา/หน่วย (บาท)<input name="price" type="number" required min="0.01" step="0.01"></label>
+            <label>ยอดใช้เฉลี่ย/วัน<input name="daily" type="number" required min="1" step="1"></label>
+            <label>Lead time (วัน)<input name="lead" type="number" required min="1" step="1"></label>
+            <label>Safety stock<input name="safety" type="number" required min="0" step="1"></label>
+            <label>เลขล็อต<input name="lot" type="text" required maxlength="20"></label>
+            <label>วันหมดอายุ<input name="expiry" type="date" required></label>
+            <label>จำนวนที่รับเข้า<input name="qty" type="number" required min="1" step="1"></label>
+            <button type="submit" class="btn wide">เพิ่มยา</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>รับยาเข้า / จ่ายยาออก</h2>
+          <p class="muted small">จ่ายออกจะตัดจากล็อตที่หมดอายุก่อนโดยอัตโนมัติ (FEFO)</p>
+          <form id="move-form" class="form-grid">
+            <label class="wide">ยา<select id="move-drug" name="moveDrug"></select></label>
+            <label>รายการ
+              <select id="move-type" name="moveType">
+                <option value="in">รับเข้า</option>
+                <option value="out">จ่ายออก</option>
+              </select>
+            </label>
+            <label>จำนวน<input name="moveQty" type="number" required min="1" step="1"></label>
+            <label class="in-only">เลขล็อต<input name="moveLot" type="text" maxlength="20"></label>
+            <label class="in-only">วันหมดอายุ<input name="moveExpiry" type="date"></label>
+            <button type="submit" class="btn wide">บันทึก</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2>ลบยา / ลบล็อต</h2>
+          <p class="muted small">ใช้กับล็อตที่หมดอายุแล้ว หรือข้อมูลที่กรอกผิด</p>
+          <form id="del-form" class="form-grid">
+            <label class="wide">ยา<select id="del-drug" name="delDrug"></select></label>
+            <label class="wide">สิ่งที่จะลบ<select id="del-target" name="delTarget"></select></label>
+            <button type="submit" class="btn secondary wide">ลบ</button>
+          </form>
+        </div>
+      <div class="card reset-card">
+        <div>
+          <h2>รีเซ็ตข้อมูล</h2>
+          <p class="muted small">กลับไปใช้ข้อมูลเริ่มต้น 30 รายการ (ใช้ก่อนเดโมถ้าข้อมูลเพี้ยน)</p>
+        </div>
+        <button type="button" class="btn secondary" id="reset-btn">รีเซ็ตข้อมูล</button>
+      </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
